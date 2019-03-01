@@ -12,7 +12,7 @@ miniomp_parallel_t *miniomp_parallel;
 
 // Declaration of per-thread specific key
 pthread_key_t miniomp_specifickey;
-
+static int end;
 // This is the prototype for the Pthreads starting function
 void *worker(void *args) {
 	// insert all necessary code here for:
@@ -26,7 +26,9 @@ void *iddle(void *tid)
 {	
 	miniomp_thread_data[(int) (long) tid].tid = (int) (long) tid;
 	pthread_setspecific(miniomp_specifickey, &miniomp_thread_data[(int) (long) tid]); 
-//	while(1);
+	while(!end){
+		break;		
+	};
 	printf("Worker %i creat\n", miniomp_thread_data[(int) (long) tid].tid);
 	pthread_exit(NULL);
 }
@@ -37,6 +39,8 @@ void *init_master(void* exec)
 	miniomp_thread_data[((miniomp_parallel_t*) exec)->id].tid = ((miniomp_parallel_t*)exec)->id;
 	pthread_setspecific(miniomp_specifickey, &miniomp_thread_data[((miniomp_parallel_t*)exec)->id]);
 	ec->fn(ec->fn_data);
+	printf("Main thread ended\n");
+	end = 1;
 	pthread_exit(NULL);
 }
 	
@@ -46,6 +50,7 @@ GOMP_parallel (void (*fn) (void *), void *data, unsigned num_threads, unsigned i
 	miniomp_parallel->fn = fn;
 	miniomp_parallel->fn_data = data;
 	miniomp_parallel->id = 0;
+	end = 0;
 	pthread_create(&miniomp_threads[0], NULL, &init_master, miniomp_parallel); 
 	for(int i = 1; i < num_threads; i++) 
 		pthread_create(&miniomp_threads[i], NULL, &iddle, (void *)(long) i);
