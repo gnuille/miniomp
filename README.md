@@ -1,2 +1,2 @@
 # miniomp
-Implementation of OpenMP runtime
+Implementation of OpenMP runtime, educational purposes.
