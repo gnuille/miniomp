@@ -16,5 +16,8 @@ extern miniomp_parallel_t *miniomp_parallel;
 // Declaration of per-thread specific key
 extern pthread_key_t miniomp_specifickey;
 
+extern int end;
 // Functions implemented in this module
 void GOMP_parallel (void (*fn) (void *), void *data, unsigned num_threads, unsigned int flags);
+
+void *worker(void *tid);

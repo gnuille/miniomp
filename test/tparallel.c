@@ -6,18 +6,20 @@ int first=0, second=0;
 
 int foo() {
     int i, x = 1023;
+    printf("First parallel region\n");
     #pragma omp parallel firstprivate(x) reduction(+:first) if(x>0) num_threads(2)
     {
     x++; 
     first += x;
     }
-
+    printf("Second parallel region\n");
     #pragma omp parallel firstprivate(x) reduction(+:first) if(0)
     {
     x++; 
     first += x;
     }
 
+    printf("Third parallel region\n");
     #pragma omp parallel private(i) shared(first) reduction(+:second) 
     {
     second = first;
@@ -25,10 +27,12 @@ int foo() {
         second++;
     }
 
+    printf("Setting num threads\n");
     omp_set_num_threads(6);
+    printf("Fourth parallel region\n");
     #pragma omp parallel
     printf("Thread %d finished the execution of foo\n", omp_get_thread_num());
-
+    printf("End of function\n");
     return(x);
 }
 
