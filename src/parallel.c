@@ -32,8 +32,10 @@ void *worker(void *tid)
 	
 void
 GOMP_parallel (void (*fn) (void *), void *data, unsigned num_threads, unsigned int flags) {
-	int orig=miniomp_icv.nthreads_var;
-	omp_set_num_threads(num_threads);	
-	fn(data);
-	omp_set_num_threads(orig);
+	if(num_threads){
+		int orig=miniomp_icv.nthreads_var;
+		omp_set_num_threads(num_threads);	
+		fn(data);
+		omp_set_num_threads(orig);
+	}
 }

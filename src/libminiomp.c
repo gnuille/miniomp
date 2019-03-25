@@ -12,6 +12,7 @@ void destroy_specifickey(void * arg)
 {
 }
 int end;
+
 void
 init_miniomp(void) {
 	printf ("mini-omp is being initialized\n");
@@ -26,7 +27,6 @@ init_miniomp(void) {
 	end = 0;
 	int i;
 	for (i = 1; i<miniomp_icv.nthreads_var; i++){
-		printf("Created thread %i\n", i);
 		pthread_create(&miniomp_threads[i],
 			NULL,
 			&worker,

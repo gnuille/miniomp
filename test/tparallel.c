@@ -27,7 +27,6 @@ int foo() {
         second++;
     }
 
-    printf("Setting num threads\n");
     omp_set_num_threads(6);
     printf("Fourth parallel region\n");
     #pragma omp parallel

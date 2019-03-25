@@ -24,17 +24,21 @@ bool is_full(miniomp_taskqueue_t *task_queue) {
 
 // Enqueues the task descriptor at the tail of the task queue
 bool enqueue(miniomp_taskqueue_t *task_queue, miniomp_task_t *task_descriptor) {
-    return true;
+	if( is_full(task_queue)) return false;
+	
 }
 
 // Dequeue the task descriptor at the head of the task queue
 bool dequeue(miniomp_taskqueue_t *task_queue) { 
+    if ( is_empty(task_queue) return false;
+    --task_queue->count;
+    task_queue->head = (task_queue->head + 1) % task_queue->max_elements;
     return true;
 }
 
 // Returns the task descriptor at the head of the task queue
 miniomp_task_t *first(miniomp_taskqueue_t *task_queue) {
-    return NULL;
+    return task_queue->queue[head];
 }
 
 #define GOMP_TASK_FLAG_UNTIED           (1 << 0)

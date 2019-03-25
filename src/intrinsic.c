@@ -2,14 +2,19 @@
 
 void omp_set_num_threads (int n) {
 	n = (n > 0 ? n : 1);
+	printf("Setting threads to %i\n", n);
 	int i;
-	if ( n > RUNNING_THREADS){
-		for(i=RUNNING_THREADS;i<n){
+	if(n > miniomp_icv.nthreads_var){
+		for(i = miniomp_icv.nthreads_var; i < n; i++){
 			pthread_create(&miniomp_threads[i],
 				       NULL,
 				       &worker,
 				       (void *)(long) i);
 		}
+	}else if(n < miniomp_icv.nthreads_var){
+		for(i = miniomp_icv.nthreads_var -1; i>=n; i--){
+			pthread_cancel(miniomp_threads[i]);
+		}	
 	}
 	miniomp_icv.nthreads_var = n;
 }
