@@ -11,7 +11,7 @@ typedef struct {
     int head;
     int tail;
     int first;
-    int lock_queue;
+    pthread_mutex_t lock_queue;
     miniomp_task_t **queue;
     // complete with additional field if needed
 } miniomp_taskqueue_t;
