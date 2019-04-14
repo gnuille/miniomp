@@ -22,10 +22,21 @@ void *worker(void *tid)
 	//   3) exit the function
 	miniomp_thread_data[(int) (long) tid].tid = (int) (long) tid;
 	pthread_setspecific(miniomp_specifickey, 
-			    &miniomp_thread_data[(int) (long) tid]); 
+			&miniomp_thread_data[(int) (long) tid]);
 	printf("Worker %i creat\n", 
 		miniomp_thread_data[(int) (long) tid].tid);
-	while(!end){
+	while(1){
+		if( !is_empty(miniomp_taskqueue) ){
+			lock(miniomp_taskqueue);
+				if( !is_empty(miniomp_taskqueue) ){
+					miniomp_task_t *t = first(miniomp_taskqueue);
+					dequeue(miniomp_taskqueue);
+					unlock(miniomp_taskqueue);
+					t->fn(t->data);
+				}else{
+					unlock(miniomp_taskqueue);
+				}
+		}
 	};
 	pthread_exit(NULL);
 }

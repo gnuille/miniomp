@@ -12,6 +12,7 @@ typedef struct {
     int tail;
     int first;
     pthread_mutex_t lock_queue;
+    pthread_mutex_t lock_operations;
     miniomp_task_t **queue;
     // complete with additional field if needed
 } miniomp_taskqueue_t;
@@ -23,6 +24,8 @@ extern miniomp_taskqueue_t * miniomp_taskqueue;
 bool is_empty(miniomp_taskqueue_t *task_queue);
 bool is_full(miniomp_taskqueue_t *task_queue) ;
 bool is_valid(miniomp_task_t *task_descriptor);
-bool enqueue(miniomp_taskqueue_t *task_queue, miniomp_task_t *task_descriptor); 
+bool enqueue(miniomp_taskqueue_t *task_queue, miniomp_task_t *task_descriptor);
 bool dequeue(miniomp_taskqueue_t *task_queue);
+void lock(miniomp_taskqueue_t *task_queue);
+void unlock(miniomp_taskqueue_t *task_queue);
 miniomp_task_t *first(miniomp_taskqueue_t *task_queue); 

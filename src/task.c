@@ -3,13 +3,11 @@
 miniomp_taskqueue_t * miniomp_taskqueue;
 
 // Initializes the task queue
-miniomp_taskqueue_t *init_task_queue(int max_elements) {
+void init_task_queue(int max_elements, miniomp_taskqueue_t * miniomp_taskqueue) {
   miniomp_taskqueue->max_elements = max_elements;
   miniomp_taskqueue->queue = malloc(max_elements*sizeof(miniomp_task_t));
   miniomp_taskqueue->head = miniomp_taskqueue->tail = 0;
   pthread_mutex_init(&miniomp_taskqueue->lock_queue, NULL );
-
-  return miniomp_taskqueue;
 }
 
 // Checks if the task descriptor is valid
@@ -48,6 +46,13 @@ bool dequeue(miniomp_taskqueue_t *task_queue) {
   return true;
 }
 
+void lock(miniomp_taskqueue_t *task_queue){
+  pthread_mutex_lock(&task_queue->lock_operations);
+}
+
+void unlock(miniomp_taskqueue_t *task_queue){
+  pthread_mutex_unlock(&task_queue->lock_operations);
+}
 // Returns the task descriptor at the head of the task queue
 miniomp_task_t *first(miniomp_taskqueue_t *task_queue) {
   return task_queue->queue[task_queue->head];
@@ -79,18 +84,34 @@ GOMP_task (void (*fn) (void *), void *data, void (*cpyfn) (void *, void *),
            void **depend, int priority)
 {
   printf("TBI: a task has been encountered, I am executing it immediately\n");
+  miniomp_task_t * task = malloc(sizeof(miniomp_task_t));
   if (__builtin_expect (cpyfn != NULL, 0))
     {
       char * buf =  malloc(sizeof(char) * (arg_size + arg_align - 1));
       char *arg = (char *) (((uintptr_t) buf + arg_align - 1)
                             & ~(uintptr_t) (arg_align - 1));
       cpyfn (arg, data);
-      fn (arg);
+      task->fn = fn;
+      task->data = (void *) arg;
+
+   //   fn (arg);
     }
   else
     {
       char * buf =  malloc(sizeof(char) * (arg_size + arg_align - 1));
       memcpy (buf, data, arg_size);
-      fn (buf);
+
+      task->fn = fn;
+      task->data = (void*) buf;
+      //fn (buf);
     }
+  lock(miniomp_taskqueue);
+  if ( !enqueue(miniomp_taskqueue, task) ){
+    unlock(miniomp_taskqueue);
+    //buffer is full, i will execute the function
+    task->fn(task->data);
+  }else{
+    unlock(miniomp_taskqueue);
+  }
+
 }
