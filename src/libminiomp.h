@@ -12,6 +12,7 @@
 
 typedef struct{
 	int tid;
+	int nfunc;
 }thread_data;
 
 typedef struct{

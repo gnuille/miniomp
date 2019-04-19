@@ -11,7 +11,7 @@ void parse_env(void);
 void destroy_specifickey(void * arg)
 {
 }
-int end;
+extern int end;
 
 void
 init_miniomp(void) {
@@ -21,23 +21,24 @@ init_miniomp(void) {
 	miniomp_threads = malloc(sizeof(pthread_t)*MAX_THREADS);
 	miniomp_thread_data = malloc(sizeof(thread_data)*MAX_THREADS);
 	miniomp_parallel = malloc(sizeof(miniomp_parallel_t));
-        pthread_key_create(&miniomp_specifickey, destroy_specifickey);
+	pthread_key_create(&miniomp_specifickey, destroy_specifickey);
 	pthread_setspecific(miniomp_specifickey, &miniomp_thread_data[0]);
 	miniomp_thread_data[0].tid = 0;
 	end = 0;
 	int i;
+	init_task_queue(MAXELEMENTS_TQ);
 	for (i = 1; i<miniomp_icv.nthreads_var; i++){
 		pthread_create(&miniomp_threads[i],
-			NULL,
-			&worker,
-			(void *)(long) i);
+					   NULL,
+					   &worker,
+					   (void *)(long) i);
 
 	}
-		// Initialize Pthread data structures 
-		// Initialize Pthread thread-specific data, useful for example to store the OpenMP thread identifier
-		// Initialize OpenMP default lock and default barrier
-		// Initialize OpenMP workdescriptors for for and single 
-		// Initialize OpenMP task queue for task and taskloop
+	// Initialize Pthread data structures
+	// Initialize Pthread thread-specific data, useful for example to store the OpenMP thread identifier
+	// Initialize OpenMP default lock and default barrier
+	// Initialize OpenMP workdescriptors for for and single
+	// Initialize OpenMP task queue for task and taskloop
 }
 
 void
@@ -48,6 +49,7 @@ fini_miniomp(void) {
 	free(miniomp_parallel);
 	free(miniomp_thread_data);
 	free(miniomp_threads);
+	free(miniomp_taskqueue->queue);
 	//right now no support for dynamic change of NTHREADS
 	printf ("mini-omp is finalized\n");
 }

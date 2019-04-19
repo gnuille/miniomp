@@ -1,4 +1,4 @@
-.SUFFIXES: -omp -gomp -domp -dgomp -asm -dasm
+.SUFFIXES: -omp -ompd -gomp -domp -dgomp -asm -dasm
 CC = gcc
 
 OPENMP	 = -fopenmp
@@ -7,7 +7,8 @@ CLIBS    = -L$(MINIOMP)/lib -lminiomp
 
 .c-omp: 
 	$(CC) $(CFLAGS) $(OPENMP) $< -o $@ $(CLIBS) 
-
+.c-ompd:
+	$(CC) $(CFLAGS) $(OPENMP) -g $< -o $@ $(CLIBS)
 .c-gomp: 
 	$(CC) $(CFLAGS) $(OPENMP) $< -o $@ 
 
@@ -24,7 +25,7 @@ CLIBS    = -L$(MINIOMP)/lib -lminiomp
 	$(CC) -D_DISPLAY_ $(CFLAGS) $(OPENMP) -c -S $< -o $@ $(CLIBS) 
 
 clean:
-	rm -rf *-omp *-gomp *-asm *-domp *-dgomp
+	rm -rf *-omp *-gomp *-asm *-domp *-dgomp *-ompd
 
 ultraclean:
-	rm -rf *-omp *-gomp *-asm *-domp *-dgomp *.prv *.pcf *.row TRACE.mpits set-0 TRACE.sym
+	rm -rf *-omp *-gomp *-asm *-domp *-dgomp *-ompd *.prv *.pcf *.row TRACE.mpits set-0 TRACE.sym

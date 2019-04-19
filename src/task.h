@@ -8,6 +8,7 @@ typedef struct {
 typedef struct {
     int max_elements;
     int count;
+    int finished_count;
     int head;
     int tail;
     int first;
@@ -26,6 +27,8 @@ bool is_full(miniomp_taskqueue_t *task_queue) ;
 bool is_valid(miniomp_task_t *task_descriptor);
 bool enqueue(miniomp_taskqueue_t *task_queue, miniomp_task_t *task_descriptor);
 bool dequeue(miniomp_taskqueue_t *task_queue);
+bool try_lock(miniomp_taskqueue_t *task_queue);
 void lock(miniomp_taskqueue_t *task_queue);
 void unlock(miniomp_taskqueue_t *task_queue);
 miniomp_task_t *first(miniomp_taskqueue_t *task_queue); 
+void init_task_queue(int max_elements);

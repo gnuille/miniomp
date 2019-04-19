@@ -3,16 +3,18 @@
 miniomp_taskqueue_t * miniomp_taskqueue;
 
 // Initializes the task queue
-void init_task_queue(int max_elements, miniomp_taskqueue_t * miniomp_taskqueue) {
+void init_task_queue(int max_elements) {
+  miniomp_taskqueue = (miniomp_taskqueue_t *) malloc(sizeof(miniomp_taskqueue_t));
   miniomp_taskqueue->max_elements = max_elements;
   miniomp_taskqueue->queue = malloc(max_elements*sizeof(miniomp_task_t));
-  miniomp_taskqueue->head = miniomp_taskqueue->tail = 0;
+  miniomp_taskqueue->finished_count = miniomp_taskqueue->count = miniomp_taskqueue->head = miniomp_taskqueue->tail = 0;
   pthread_mutex_init(&miniomp_taskqueue->lock_queue, NULL );
+  pthread_mutex_init(&miniomp_taskqueue->lock_operations, NULL );
 }
 
 // Checks if the task descriptor is valid
 bool is_valid(miniomp_task_t *task_descriptor) {
-  return false;
+  return 1;
 }
 
 // Checks if the task queue is empty
@@ -28,12 +30,13 @@ bool is_full(miniomp_taskqueue_t *task_queue) {
 // Enqueues the task descriptor at the tail of the task queue
 bool enqueue(miniomp_taskqueue_t *task_queue, miniomp_task_t *task_descriptor) {
   pthread_mutex_lock(&task_queue->lock_queue);
-  if( is_full(task_queue)) return false;
+  if( is_full(task_queue)) return 0;
   task_queue->queue[task_queue->tail] = task_descriptor;
   task_queue->tail = (task_queue->tail+ 1) % task_queue->max_elements;
   ++task_queue->count;
+  ++task_queue->finished_count;
   pthread_mutex_unlock(&task_queue->lock_queue);
-  return true;
+  return 1;
 }
 
 // Dequeue the task descriptor at the head of the task queue
@@ -48,6 +51,10 @@ bool dequeue(miniomp_taskqueue_t *task_queue) {
 
 void lock(miniomp_taskqueue_t *task_queue){
   pthread_mutex_lock(&task_queue->lock_operations);
+}
+
+bool try_lock(miniomp_taskqueue_t *task_queue){
+  return !pthread_mutex_trylock(&task_queue->lock_operations);
 }
 
 void unlock(miniomp_taskqueue_t *task_queue){
@@ -83,7 +90,6 @@ GOMP_task (void (*fn) (void *), void *data, void (*cpyfn) (void *, void *),
            long arg_size, long arg_align, bool if_clause, unsigned flags,
            void **depend, int priority)
 {
-  printf("TBI: a task has been encountered, I am executing it immediately\n");
   miniomp_task_t * task = malloc(sizeof(miniomp_task_t));
   if (__builtin_expect (cpyfn != NULL, 0))
     {
@@ -106,12 +112,12 @@ GOMP_task (void (*fn) (void *), void *data, void (*cpyfn) (void *, void *),
       //fn (buf);
     }
   lock(miniomp_taskqueue);
-  if ( !enqueue(miniomp_taskqueue, task) ){
+  if ( enqueue(miniomp_taskqueue, task) == 0 ){
     unlock(miniomp_taskqueue);
     //buffer is full, i will execute the function
+    printf("buffer full executing..\n");
     task->fn(task->data);
   }else{
     unlock(miniomp_taskqueue);
   }
-
 }
