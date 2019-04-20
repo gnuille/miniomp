@@ -19,7 +19,7 @@ typedef struct {
 } miniomp_taskqueue_t;
 
 extern miniomp_taskqueue_t * miniomp_taskqueue;
-#define MAXELEMENTS_TQ 128
+#define MAXELEMENTS_TQ 2048
 
 // funtions to implement basic management operations on taskqueue
 bool is_empty(miniomp_taskqueue_t *task_queue);

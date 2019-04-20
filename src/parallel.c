@@ -23,8 +23,6 @@ void *worker(void *tid)
 	miniomp_thread_data[(int) (long) tid].tid = (int) (long) tid;
 	pthread_setspecific(miniomp_specifickey, 
 			&miniomp_thread_data[(int) (long) tid]);
-	printf("Worker %i creat\n", 
-		miniomp_thread_data[(int) (long) tid].tid);
 	int executed = 0;
 	while(1){
 		if( !is_empty(miniomp_taskqueue) ){
@@ -35,14 +33,11 @@ void *worker(void *tid)
 					unlock(miniomp_taskqueue);
 					t->fn(t->data);
 					executed++;
-					printf("T %d executed %d\n", (int) (long) tid, executed);
-					printf("To execute %d\n", miniomp_taskqueue->finished_count);
 				}else{
 					unlock(miniomp_taskqueue);
 				}
 		}else{
-			if(executed > 0){
-				lock(miniomp_taskqueue);
+			if(executed > 0 && try_lock(miniomp_taskqueue)){
 				miniomp_taskqueue->finished_count -= executed;
 				executed = 0;
 				unlock(miniomp_taskqueue);
@@ -65,7 +60,6 @@ GOMP_parallel (void (*fn) (void *), void *data, unsigned num_threads, unsigned i
 	}
 	fn(data);
 	int cont=0;;
-	printf("All tasks created\n");
 	while(!is_empty(miniomp_taskqueue)){
 		lock(miniomp_taskqueue);
 		if( !is_empty(miniomp_taskqueue) ) {
@@ -74,8 +68,6 @@ GOMP_parallel (void (*fn) (void *), void *data, unsigned num_threads, unsigned i
 			unlock(miniomp_taskqueue);
 			t->fn(t->data);
 			cont++;
-			printf("Main executed %d\n", cont);
-			printf("To execute %d\n", miniomp_taskqueue->finished_count);
 		}else{
 			unlock(miniomp_taskqueue);
 		}
@@ -83,6 +75,16 @@ GOMP_parallel (void (*fn) (void *), void *data, unsigned num_threads, unsigned i
 	lock(miniomp_taskqueue);
 	miniomp_taskqueue->finished_count -= cont;
 	unlock(miniomp_taskqueue);
-	while(miniomp_taskqueue->finished_count > 0){}
+	while(1){
+		//lock(miniomp_taskqueue);
+		__sync_synchronize();
+		if(miniomp_taskqueue->finished_count == 0){
+		//	unlock(miniomp_taskqueue);
+			goto end;
+		}
+		//unlock(miniomp_taskqueue);
+		
+	}
+	end:
 	if(num_threads) omp_set_num_threads(orig);
 }
