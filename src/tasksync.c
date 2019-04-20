@@ -22,7 +22,10 @@ GOMP_taskwait (void)
 	lock(miniomp_taskqueue);
 	miniomp_taskqueue->finished_count -= cont;
 	unlock(miniomp_taskqueue);
-	while(!finished(miniomp_taskqueue)){}
+	while(1){
+		mb();
+		if(!miniomp_taskqueue->finished_count) return;
+	}
 }
 
 void
@@ -51,5 +54,8 @@ GOMP_taskgroup_end (void)
 	lock(miniomp_taskqueue);
 	miniomp_taskqueue->finished_count -= cont;
 	unlock(miniomp_taskqueue);
-	while(!finished(miniomp_taskqueue)){}
+	while(1){
+		mb();
+		if(!miniomp_taskqueue->finished_count) return;
+	}
 }

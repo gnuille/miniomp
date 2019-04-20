@@ -7,11 +7,10 @@ pthread_t *miniomp_threads;
 
 thread_data *miniomp_thread_data;
 
-// Global variable for parallel descriptor
-miniomp_parallel_t *miniomp_parallel;
-
 // Declaration of per-thread specific key
 pthread_key_t miniomp_specifickey;
+
+extern void GOMP_taskwait(void);
 // This is the prototype for the Pthreads starting function
 
 void *worker(void *tid)
@@ -59,32 +58,8 @@ GOMP_parallel (void (*fn) (void *), void *data, unsigned num_threads, unsigned i
 		omp_set_num_threads(num_threads);
 	}
 	fn(data);
-	int cont=0;;
-	while(!is_empty(miniomp_taskqueue)){
-		lock(miniomp_taskqueue);
-		if( !is_empty(miniomp_taskqueue) ) {
-			miniomp_task_t *t = first(miniomp_taskqueue);
-			dequeue(miniomp_taskqueue);
-			unlock(miniomp_taskqueue);
-			t->fn(t->data);
-			cont++;
-		}else{
-			unlock(miniomp_taskqueue);
-		}
-	}
-	lock(miniomp_taskqueue);
-	miniomp_taskqueue->finished_count -= cont;
-	unlock(miniomp_taskqueue);
-	while(1){
-		//lock(miniomp_taskqueue);
-		__sync_synchronize();
-		if(miniomp_taskqueue->finished_count == 0){
-		//	unlock(miniomp_taskqueue);
-			goto end;
-		}
-		//unlock(miniomp_taskqueue);
-		
-	}
-	end:
+
+	GOMP_taskwait();
+
 	if(num_threads) omp_set_num_threads(orig);
 }

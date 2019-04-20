@@ -11,7 +11,6 @@ void parse_env(void);
 void destroy_specifickey(void * arg)
 {
 }
-extern int end;
 
 void
 init_miniomp(void) {
@@ -20,11 +19,9 @@ init_miniomp(void) {
 	parse_env();
 	miniomp_threads = malloc(sizeof(pthread_t)*MAX_THREADS);
 	miniomp_thread_data = malloc(sizeof(thread_data)*MAX_THREADS);
-	miniomp_parallel = malloc(sizeof(miniomp_parallel_t));
 	pthread_key_create(&miniomp_specifickey, destroy_specifickey);
 	pthread_setspecific(miniomp_specifickey, &miniomp_thread_data[0]);
 	miniomp_thread_data[0].tid = 0;
-	end = 0;
 	int i;
 	init_task_queue(MAXELEMENTS_TQ);
 	for (i = 1; i<miniomp_icv.nthreads_var; i++){
@@ -45,11 +42,9 @@ void
 fini_miniomp(void) {
 	// free structures allocated during library initialization	
 	pthread_key_delete(miniomp_specifickey);
-	end = 1;
-	free(miniomp_parallel);
 	free(miniomp_thread_data);
 	free(miniomp_threads);
-	free(miniomp_taskqueue->queue);
+	free(miniomp_taskqueue);
 	//right now no support for dynamic change of NTHREADS
 	printf ("mini-omp is finalized\n");
 }

@@ -12,13 +12,7 @@
 
 typedef struct{
 	int tid;
-	int nfunc;
 }thread_data;
-
-typedef struct{
-	void (*fn) (void *);
-	void *data;
-}execContext;
 
 // To implement memory barrier (flush)
 //void __atomic_thread_fence(int);
