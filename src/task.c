@@ -1,6 +1,8 @@
 #include "libminiomp.h"
 
 miniomp_taskqueue_t * miniomp_taskqueue;
+extern int in_taskgroup;
+extern int taskgroup_counter;
 
 // Initializes the task queue
 void init_task_queue(int max_elements) {
@@ -13,10 +15,6 @@ void init_task_queue(int max_elements) {
 }
 
 // Checks if the task descriptor is valid
-bool is_valid(miniomp_task_t *task_descriptor) {
-  return 1;
-}
-
 // Checks if the task queue is empty
 bool is_empty(miniomp_taskqueue_t *task_queue) {
   return !task_queue->count;
@@ -30,11 +28,14 @@ bool is_full(miniomp_taskqueue_t *task_queue) {
 // Enqueues the task descriptor at the tail of the task queue
 bool enqueue(miniomp_taskqueue_t *task_queue, miniomp_task_t *task_descriptor) {
   pthread_mutex_lock(&task_queue->lock_queue);
-  if( is_full(task_queue)) return 0;
+  if( is_full(task_queue)){
+	pthread_mutex_unlock(&task_queue->lock_queue); 
+	return 0;
+  }
   task_queue->queue[task_queue->tail] = task_descriptor;
   task_queue->tail = (task_queue->tail+ 1) % task_queue->max_elements;
   ++task_queue->count;
-  ++task_queue->finished_count;
+  __sync_fetch_and_add(&task_queue->finished_count, 1);
   pthread_mutex_unlock(&task_queue->lock_queue);
   return 1;
 }
@@ -109,15 +110,14 @@ GOMP_task (void (*fn) (void *), void *data, void (*cpyfn) (void *, void *),
 
       task->fn = fn;
       task->data = (void*) buf;
-      //fn (buf);
     }
-  lock(miniomp_taskqueue);
-  if ( enqueue(miniomp_taskqueue, task) == 0 ){
-    unlock(miniomp_taskqueue);
+  if(in_taskgroup){
+	task->in_taskgroup = 1;
+	__sync_fetch_and_add(&taskgroup_counter,1);
+	
+  }
+  if ( !enqueue(miniomp_taskqueue, task) ){
     //buffer is full, i will execute the function
-    printf("buffer full executing..\n");
     task->fn(task->data);
-  }else{
-    unlock(miniomp_taskqueue);
   }
 }

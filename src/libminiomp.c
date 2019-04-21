@@ -7,6 +7,8 @@ void fini_miniomp(void) __attribute__((destructor));
 
 // Function to parse OMP_NUM_THREADS environment variable
 void parse_env(void);
+extern int in_taskgroup;
+extern pthread_mutex_t taskgroup_lock;
 
 void destroy_specifickey(void * arg)
 {
@@ -14,6 +16,7 @@ void destroy_specifickey(void * arg)
 
 void
 init_miniomp(void) {
+	in_taskgroup=0;
 	printf ("mini-omp is being initialized\n");
 	// Parse OMP_NUM_THREADS environment variable to initialize nthreads_var internal control variable
 	parse_env();
@@ -22,8 +25,9 @@ init_miniomp(void) {
 	pthread_key_create(&miniomp_specifickey, destroy_specifickey);
 	pthread_setspecific(miniomp_specifickey, &miniomp_thread_data[0]);
 	miniomp_thread_data[0].tid = 0;
+	pthread_mutex_init(&taskgroup_lock, NULL);
+	init_task_queue(MAXELEMENTS_TQ); 
 	int i;
-	init_task_queue(MAXELEMENTS_TQ);
 	for (i = 1; i<miniomp_icv.nthreads_var; i++){
 		pthread_create(&miniomp_threads[i],
 					   NULL,
@@ -40,7 +44,7 @@ init_miniomp(void) {
 
 void
 fini_miniomp(void) {
-	// free structures allocated during library initialization	
+	// free structures allocated during library initialization
 	pthread_key_delete(miniomp_specifickey);
 	free(miniomp_thread_data);
 	free(miniomp_threads);

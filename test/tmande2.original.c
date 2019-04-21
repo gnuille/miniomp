@@ -172,6 +172,7 @@ int main(int argc, char *argv[]) {
     START_COUNT_TIME;
 
     #pragma omp parallel
+    #pragma omp single // uncomment single pragma when testing with the original libgomp
     {
     mandelbrot(height,width,real_min, imag_min, scale_real, scale_imag, maxiter, 
                output); 

@@ -13,6 +13,7 @@ void foo() {
 //#pragma omp single
     {
     printf("All threads created\n");
+    printf("Im the thread %d\n", omp_get_thread_num());
     int argum = 1;
     #pragma omp task  shared(result) firstprivate(argum)
     for (long i = 0; i < 10; i++) {

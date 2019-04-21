@@ -11,6 +11,8 @@ thread_data *miniomp_thread_data;
 pthread_key_t miniomp_specifickey;
 
 extern void GOMP_taskwait(void);
+extern int in_taskgroup;
+extern int taskgroup_counter;
 // This is the prototype for the Pthreads starting function
 
 void *worker(void *tid)
@@ -32,14 +34,16 @@ void *worker(void *tid)
 					unlock(miniomp_taskqueue);
 					t->fn(t->data);
 					executed++;
+					if(t->in_taskgroup){
+						__sync_fetch_and_sub(&taskgroup_counter, 1);
+					}
 				}else{
 					unlock(miniomp_taskqueue);
 				}
 		}else{
-			if(executed > 0 && try_lock(miniomp_taskqueue)){
-				miniomp_taskqueue->finished_count -= executed;
+			if(executed > 0 ){
+				__sync_fetch_and_sub(&miniomp_taskqueue->finished_count, executed);
 				executed = 0;
-				unlock(miniomp_taskqueue);
 
 			}
 			
