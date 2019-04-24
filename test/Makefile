@@ -10,7 +10,7 @@ CLIBS    = -L$(MINIOMP)/lib -lminiomp
 .c-ompd:
 	$(CC) $(CFLAGS) $(OPENMP) -g $< -o $@ $(CLIBS)
 .c-gomp: 
-	$(CC) $(CFLAGS) $(OPENMP) $< -o $@ 
+	$(CC) $(CFLAGS) $(OPENMP) -D GOMP $< -o $@ 
 
 .c-asm: 
 	$(CC) $(CFLAGS) $(OPENMP) -c -S $< -o $@ $(CLIBS) 

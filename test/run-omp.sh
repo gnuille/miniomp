@@ -10,4 +10,17 @@ then
         exit 0
 fi
 
-OMP_NUM_THREADS=$2 /usr/bin/time ./$1
+i=1
+MAX=24
+N=3
+
+while (test $i -le $MAX)
+do
+	echo -e -n "$i\t"
+	export OMP_NUM_THREADS=$i
+	elapsed1=0
+	elapsed2=0
+	it=0
+	while (test $it -lt $N)
+	do
+		./$1 | grep time | a
