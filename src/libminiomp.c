@@ -17,7 +17,6 @@ void destroy_specifickey(void * arg)
 void
 init_miniomp(void) {
 	in_taskgroup=0;
-	printf ("mini-omp is being initialized\n");
 	// Parse OMP_NUM_THREADS environment variable to initialize nthreads_var internal control variable
 	parse_env();
 	miniomp_threads = malloc(sizeof(pthread_t)*MAX_THREADS);
@@ -50,5 +49,4 @@ fini_miniomp(void) {
 	free(miniomp_threads);
 	free(miniomp_taskqueue);
 	//right now no support for dynamic change of NTHREADS
-	printf ("mini-omp is finalized\n");
 }
