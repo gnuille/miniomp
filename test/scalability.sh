@@ -71,7 +71,7 @@ set output 'output.png'
 
 set multiplot layout 1,2
 
-
+f(x) = x
 set size ratio 1
 set xrange [1:24]
 set xtics 2
@@ -84,7 +84,7 @@ set size ratio -1
 set xlabel "OMP #threads"
 set ylabel "Speed-up"
 set title "Speed-up  wrt sequential time"
-plot 'plotdata' using 1:4 with lines lw 2 title "miniomp", 'plotdata' using 1:5 with lines lw 2 title "openmp"
+plot 'plotdata' using 1:4 with lines lw 2 title "miniomp", 'plotdata' using 1:5 with lines lw 2 title "openmp", f(x) notitle
 
 unset multiplot 
 EOF

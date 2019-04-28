@@ -81,7 +81,7 @@ void add(int pos, int val){
 	vec[pos] += val;
 }
 int main(int argc, char *argv[]) {
-	int i;
+	int i, j;
 	#pragma omp parallel 
 	#ifdef GOMP
 	#pragma omp single
@@ -91,14 +91,15 @@ int main(int argc, char *argv[]) {
 			#pragma omp task firstprivate(i)
 			set(i, 1);
 		}
-		for( i = 0; i < (1 << 9); i++){
-			#pragma omp task firstprivate(i)
-			set_other(i, 1);
+		for( j = 0; j < (1 << 9); j++){
+			#pragma omp task firstprivate(j)
+			set_other(j, 1);
 		}
 
 
 		#pragma omp taskwait
 		assert(1);
+		assert_other(1);
 
 // TASKWAIT TEST
 		for( i = 0; i < (1 << 10); i++){
@@ -109,9 +110,11 @@ int main(int argc, char *argv[]) {
 		assert(3900);
 //TASKGROUP TEST
 		#pragma omp taskgroup
+		{
 		for( i = 0; i < (1 << 10); i++){
 			#pragma omp task firstprivate(i)
 			compute_high(i); 
+		}
 		}
 		assert(14649);
 //BIG TASK AND THEN TASKGROUP TO CHECK RUNTIME DOESNT WAIT FOR OTHER TASKS
@@ -124,12 +127,13 @@ int main(int argc, char *argv[]) {
 			add(i, -10000);
 		}
 		#pragma omp taskgroup
-		for(i = 0; i < (1 << 9); i++){
-			#pragma omp task
-			compute_other(i);
+		for(j = 0; j < (1 << 9); j++){
+			#pragma omp task firstprivate(j)
+			compute_other(j);
 		}
 //THIS SHALL FAILL, PROFF OF TASKGROUP JUST WAITS FOR TASKGROUP TASKS
 		assert(14649);
+//THIS SHALL NOT FAILL
 		assert_other(3900);
 	}
 }
